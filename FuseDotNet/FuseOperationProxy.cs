@@ -2,6 +2,7 @@ using FuseDotNet.Extensions;
 using FuseDotNet.Logging;
 using System;
 using System.Buffers;
+using System.Runtime.Versioning;
 using System.Text;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
@@ -22,6 +23,10 @@ namespace FuseDotNet;
 /// <param name="logger">
 /// A <see cref="ILogger"/> that handle all logging.
 /// </param>
+#if NET5_0_OR_GREATER
+[SupportedOSPlatform("linux")]
+[SupportedOSPlatform("freebsd")]
+#endif
 internal sealed class FuseOperationProxy(IFuseOperations operations, ILogger logger)
 {
     private readonly IFuseOperations operations = operations;

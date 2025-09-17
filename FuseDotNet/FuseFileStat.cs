@@ -1,6 +1,7 @@
 ﻿using FuseDotNet.Native;
 using System;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 #pragma warning disable IDE1006 // Naming Styles
 
@@ -400,8 +401,16 @@ public readonly struct TimeSpec(long msec) : IEquatable<TimeSpec>, IComparable<T
     {
     }
 
+#if NET5_0_OR_GREATER
+    [SupportedOSPlatform("linux")]
+    [SupportedOSPlatform("freebsd")]
+#endif
     public static TimeSpec Now(out TimeSpec timespec) => NativeMethods.time(out timespec);
 
+#if NET5_0_OR_GREATER
+    [SupportedOSPlatform("linux")]
+    [SupportedOSPlatform("freebsd")]
+#endif
     public static TimeSpec Now() => NativeMethods.time(out _);
 
     public DateTimeOffset ToDateTime() => IsPseudoNow ? DateTimeOffset.UtcNow : DateTimeOffset.FromUnixTimeMilliseconds(total_msec);

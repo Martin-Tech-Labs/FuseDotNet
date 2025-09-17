@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable CA2101 // Specify marshaling for P/Invoke string arguments
@@ -9,6 +10,10 @@ namespace FuseDotNet.Native;
 /// <summary>
 /// Native API to the kernel Fuse driver.
 /// </summary>
+#if NET5_0_OR_GREATER
+[SupportedOSPlatform("linux")]
+[SupportedOSPlatform("freebsd")]
+#endif
 internal static class NativeMethods
 {
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP

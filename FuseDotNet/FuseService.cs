@@ -2,10 +2,15 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Threading;
 
 namespace FuseDotNet;
 
+#if NET5_0_OR_GREATER
+[SupportedOSPlatform("linux")]
+[SupportedOSPlatform("freebsd")]
+#endif
 public class FuseService(IFuseOperations operations, string[] args) : IDisposable
 {
     public event EventHandler? Stopped;
@@ -24,10 +29,14 @@ public class FuseService(IFuseOperations operations, string[] args) : IDisposabl
 
     public void Start()
     {
+#if NET7_0_OR_GREATER
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
+#else
         if (IsDisposed)
         {
             throw new ObjectDisposedException(GetType().Name);
         }
+#endif
 
         ServiceThread = new(ServiceThreadProcedure)
         {

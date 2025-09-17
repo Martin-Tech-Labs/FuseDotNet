@@ -1,12 +1,13 @@
 #define CONSOLE_LOGGER
 
+using FuseDotNet.Logging;
+using FuseDotNet.Native;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Text;
-using FuseDotNet.Logging;
-using FuseDotNet.Native;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 
@@ -15,6 +16,10 @@ namespace FuseDotNet;
 /// <summary>
 /// Helper and extension methods to %Fuse.
 /// </summary>
+#if NET5_0_OR_GREATER
+[SupportedOSPlatform("linux")]
+[SupportedOSPlatform("freebsd")]
+#endif
 public static class Fuse
 {
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP

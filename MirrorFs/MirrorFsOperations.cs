@@ -1,9 +1,14 @@
 ﻿using FuseDotNet;
 using FuseDotNet.Extensions;
 using LTRData.Extensions.Native.Memory;
+using System.Runtime.Versioning;
 
 namespace MirrorFs;
 
+#if NET5_0_OR_GREATER
+[SupportedOSPlatform("linux")]
+[SupportedOSPlatform("freebsd")]
+#endif
 internal class MirrorFsOperations(string basePath) : IFuseOperations
 {
     public string BasePath { get; } = basePath;

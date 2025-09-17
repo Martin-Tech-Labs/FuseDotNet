@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
 
@@ -124,6 +125,10 @@ public static class FuseHelper
         }
     }
 
+#if NET5_0_OR_GREATER
+    [SupportedOSPlatform("linux")]
+    [SupportedOSPlatform("freebsd")]
+#endif
     public static PosixResult ToPosixResult(this Exception? ex)
     {
         while (ex is TargetInvocationException or AggregateException)

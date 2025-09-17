@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace FuseDotNet;
 
@@ -10,6 +11,10 @@ namespace FuseDotNet;
 /// and others have different values depending on platform.
 /// </summary>
 /// <param name="value">Integer value of error code</param>
+#if NET5_0_OR_GREATER
+[SupportedOSPlatform("linux")]
+[SupportedOSPlatform("freebsd")]
+#endif
 public readonly struct PosixResult(int value) : IEquatable<PosixResult>
 {
     private readonly int value = value;

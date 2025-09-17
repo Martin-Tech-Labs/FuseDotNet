@@ -1,10 +1,15 @@
 ﻿using FuseDotNet;
 using FuseDotNet.Logging;
+using System.Runtime.Versioning;
 
 namespace MirrorFs;
 
 public static class Program
 {
+#if NET5_0_OR_GREATER
+    [SupportedOSPlatform("linux")]
+    [SupportedOSPlatform("freebsd")]
+#endif
     public static int Main(params string[] args)
     {
         try

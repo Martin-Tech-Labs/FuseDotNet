@@ -3,9 +3,14 @@ using FuseDotNet.Extensions;
 using LTRData.Extensions.Native.Memory;
 using System;
 using System.Collections.Generic;
+using System.Runtime.Versioning;
 
 namespace TempFs;
 
+#if NET5_0_OR_GREATER
+[SupportedOSPlatform("linux")]
+[SupportedOSPlatform("freebsd")]
+#endif
 internal class TempFsOperations : IFuseOperations
 {
     public PosixResult GetAttr(ReadOnlyNativeMemory<byte> fileNamePtr, out FuseFileStat stat, ref FuseFileInfo fileInfo)
