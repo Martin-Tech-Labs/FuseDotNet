@@ -17,7 +17,7 @@ public static class Program
             Console.WriteLine($"Creating mirror file system with base path '{args[0]}'");
             using var operations = new MirrorFsOperations(args[0]);
 
-            args = [.. args.Skip(1)];
+            args = ["MirrorFs", .. args.Skip(1)];
 
             Console.WriteLine($"Starting fuse with arguments: '{string.Join("', '", args)}'");
             operations.Mount(args, new ConsoleLogger());

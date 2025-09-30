@@ -1,5 +1,6 @@
 ﻿using FuseDotNet;
 using System;
+using System.Linq;
 using System.Runtime.Versioning;
 
 namespace TempFs;
@@ -16,7 +17,7 @@ public static class Program
         {
             using var operations = new TempFsOperations();
 
-            operations.Mount(args);
+            operations.Mount(args.Prepend("TempFs"));
 
             Console.WriteLine($"Fuse exit");
 
