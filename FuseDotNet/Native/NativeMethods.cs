@@ -52,7 +52,5 @@ internal static class NativeMethods
     internal static extern TimeSpec time(out TimeSpec timespec);
 
     [DllImport(LIB_C, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-    [return: MarshalAs(UnmanagedStringType)]
-    internal static extern string strerror(int errno);
-
+    internal static extern nint strerror(int errno);
 }

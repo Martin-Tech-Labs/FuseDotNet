@@ -1,4 +1,5 @@
-﻿using FuseDotNet.Native;
+﻿using FuseDotNet.Extensions;
+using FuseDotNet.Native;
 using System;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
@@ -49,7 +50,8 @@ public readonly struct PosixResult(int value) : IEquatable<PosixResult>
 
     private static readonly ConcurrentDictionary<int, string> systemMessages = new();
 
-    public override string ToString() => systemMessages.GetOrAdd(value, value => $"{NativeMethods.strerror(value)} ({value})");
+    public override string ToString()
+        => systemMessages.GetOrAdd(value, static value => $"{FuseHelper.GetString(FuseHelper.SpanFromIntPtr(NativeMethods.strerror(value)))} ({value})");
 
     static PosixResult()
     {
