@@ -8,13 +8,14 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <DebugType>portable</DebugType>
     <PackageId>LTRData.$(MSBuildProjectName)</PackageId>
 	<IncludeSymbols>true</IncludeSymbols>
 	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Company>LTR Data</Company>
     <PackageOutputPath>$(LocalNuGetPath)</PackageOutputPath>
     <Copyright>Copyright (c) Olof Lagerkvist, LTR Data 2022 - 2025</Copyright>
-    <Version>1.0.0.10</Version>
+    <Version>1.0.0.11</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
     <Company>LTR Data</Company>
