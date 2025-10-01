@@ -33,14 +33,27 @@ public static class Fuse
             return 0;
         }
 
-        var array = Encoding.UTF8.GetBytes(arg);
-        var ptr = Marshal.AllocCoTaskMem(array.Length + 1);
-        var bytes = new Span<byte>((byte*)ptr, array.Length + 1);
-        array.CopyTo(bytes);
-        bytes[array.Length] = 0;
+        var utf8bufferLength = Encoding.UTF8.GetByteCount(arg) + 1;
+        var ptr = Marshal.AllocCoTaskMem(utf8bufferLength);
+        var bytes = new Span<byte>((byte*)ptr, utf8bufferLength);
+
+        fixed (char* argptr = arg)
+        {
+            var utf8ByteCount = Encoding.UTF8.GetBytes(argptr, arg.Length, (byte*)ptr, utf8bufferLength);
+            bytes[utf8ByteCount] = 0;
+        }
+
         return ptr;
     }
 #endif
+
+    public static void FreeCoTaskMemUTF8(nint ptr)
+    {
+        if (ptr != 0)
+        {
+            Marshal.FreeCoTaskMem(ptr);
+        }
+    }
 
     /// <summary>
     /// Call %Fuse without file system operations. Useful for example to list available command line
@@ -54,7 +67,7 @@ public static class Fuse
 
         var status = NativeMethods.fuse_main_real(utf8args.Length, utf8args, null, 0, 0);
 
-        Array.ForEach(utf8args, Marshal.FreeCoTaskMem);
+        Array.ForEach(utf8args, FreeCoTaskMemUTF8);
 
         return status;
     }
@@ -123,7 +136,7 @@ public static class Fuse
 
         var status = NativeMethods.fuse_main_real(utf8args.Length, utf8args, fuseOperations, Marshal.SizeOf(fuseOperations), 0);
 
-        Array.ForEach(utf8args, Marshal.FreeCoTaskMem);
+        Array.ForEach(utf8args, FreeCoTaskMemUTF8);
 
         GC.KeepAlive(fuseOperations);
 
@@ -133,4 +146,3 @@ public static class Fuse
         }
     }
 }
-

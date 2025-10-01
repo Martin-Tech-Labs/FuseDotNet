@@ -155,7 +155,7 @@ public static class FuseHelper
     public static string GetString(ReadOnlyNativeMemory<byte> buffer)
         => GetString(buffer.Span);
 
-    public static string GetString(ReadOnlySpan<byte> span)
+    public static unsafe string GetString(ReadOnlySpan<byte> span)
     {
         if (span.IsEmpty)
         {
@@ -186,15 +186,9 @@ public static class FuseHelper
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP
             return Encoding.UTF8.GetString(span);
 #else
-            var buffer = ArrayPool<byte>.Shared.Rent(span.Length);
-            try
+            fixed (byte* ptr = span)
             {
-                span.CopyTo(buffer);
-                return Encoding.UTF8.GetString(buffer, 0, span.Length);
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(buffer);
+                return Encoding.UTF8.GetString(ptr, span.Length);
             }
 #endif
         }
