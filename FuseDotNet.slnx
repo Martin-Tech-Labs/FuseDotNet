@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/Samples/">
+    <Project Path="MirrorFs/MirrorFs.csproj" />
+    <Project Path="TempFs/TempFs.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="FuseDotNet.snk" />
+    <File Path="LICENSE.txt" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="FuseDotNet/FuseDotNet.csproj" />
+</Solution>
