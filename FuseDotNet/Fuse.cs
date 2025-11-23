@@ -145,4 +145,26 @@ public static class Fuse
             throw new PosixException(status);
         }
     }
+
+    public static void Unmount(string dir)
+    {
+        if (NativeMethods.unmount(dir, 0) == 0)
+        {
+            return;
+        }
+
+        throw new PosixException(Marshal.GetLastWin32Error());
+    }
+
+    public static bool TryUnmount(string dir, out PosixResult result)
+    {
+        if (NativeMethods.unmount(dir, 0) == 0)
+        {
+            result = PosixResult.Success;
+            return true;
+        }
+
+        result = Marshal.GetLastWin32Error();
+        return false;
+    }
 }

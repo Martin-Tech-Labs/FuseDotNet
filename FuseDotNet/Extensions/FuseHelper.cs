@@ -28,7 +28,9 @@ public static class FuseHelper
 #if NET6_0_OR_GREATER
 
     public static unsafe NativeMemory<byte> SpanFromIntPtr(nint ptr)
-        => new(ptr, MemoryMarshal.CreateReadOnlySpanFromNullTerminated((byte*)ptr).Length);
+        => ptr == 0
+        ? default
+        : new(ptr, MemoryMarshal.CreateReadOnlySpanFromNullTerminated((byte*)ptr).Length);
 
 #else
 

@@ -42,15 +42,15 @@ internal static class NativeMethods
         [In, MarshalAs(UnmanagedType.LPArray)] nint[] argv,
         [In] FuseOperations? operations, nint operationsSize, nint userData);
 
-    [DllImport(LIB_C, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-    internal static extern PosixResult unmount([In, MarshalAs(UnmanagedStringType)] string dir, int flags);
+    [DllImport(LIB_C, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true, SetLastError = true)]
+    internal static extern int unmount([In, MarshalAs(UnmanagedStringType)] string dir, int flags);
 
-    [DllImport(LIB_C, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    [DllImport(LIB_C, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true, SetLastError = true)]
     internal static extern nint strlen(nint ptr);
 
-    [DllImport(LIB_C, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    [DllImport(LIB_C, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true, SetLastError = true)]
     internal static extern TimeSpec time(out TimeSpec timespec);
 
-    [DllImport(LIB_C, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    [DllImport(LIB_C, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true, SetLastError = true)]
     internal static extern nint strerror(int errno);
 }
