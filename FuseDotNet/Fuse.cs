@@ -148,17 +148,32 @@ public static class Fuse
 
     public static void Unmount(string dir)
     {
-        if (NativeMethods.unmount(dir, 0) == 0)
+        if (!TryUnmount(dir, out var result))
         {
-            return;
+            throw new PosixException(result);
         }
-
-        throw new PosixException(Marshal.GetLastWin32Error());
     }
 
     public static bool TryUnmount(string dir, out PosixResult result)
     {
-        if (NativeMethods.unmount(dir, 0) == 0)
+        int rc;
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            rc = NativeMethods.umount(dir);
+        }
+#if NETCOREAPP
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+        {
+            rc = NativeMethods.unmount(dir, 0);
+        }
+#endif
+        else
+        {
+            throw new PlatformNotSupportedException();
+        }
+
+        if (rc == 0)
         {
             result = PosixResult.Success;
             return true;

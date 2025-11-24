@@ -46,6 +46,12 @@ internal static class NativeMethods
     internal static extern int unmount([In, MarshalAs(UnmanagedStringType)] string dir, int flags);
 
     [DllImport(LIB_C, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true, SetLastError = true)]
+    internal static extern int umount2([In, MarshalAs(UnmanagedStringType)] string dir, int flags);
+
+    [DllImport(LIB_C, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true, SetLastError = true)]
+    internal static extern int umount([In, MarshalAs(UnmanagedStringType)] string dir);
+
+    [DllImport(LIB_C, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true, SetLastError = true)]
     internal static extern nint strlen(nint ptr);
 
     [DllImport(LIB_C, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true, SetLastError = true)]
