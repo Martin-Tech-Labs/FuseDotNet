@@ -1,9 +1,12 @@
 ﻿using FuseDotNet.Native;
+using LTRData.Extensions.Async;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace FuseDotNet;
 
@@ -13,9 +16,11 @@ namespace FuseDotNet;
 #endif
 public class FuseService(IFuseOperations operations, string[] args) : IDisposable
 {
+    public event EventHandler? Dismounting;
+
     public event EventHandler? Stopped;
 
-    public event EventHandler<ThreadExceptionEventArgs>? Error;
+    public event ThreadExceptionEventHandler? Error;
 
     public IFuseOperations Operations { get; } = operations;
 
@@ -23,9 +28,11 @@ public class FuseService(IFuseOperations operations, string[] args) : IDisposabl
 
     private readonly string[] _args = args;
 
-    public bool Running => ServiceThread?.IsAlive ?? false;
+    public bool Running => !ServiceTask?.IsCompleted ?? false;
 
-    protected Thread? ServiceThread { get; private set; }
+    protected Task? ServiceTask { get; private set; }
+
+    protected int? ThreadId { get; private set; }
 
     public void Start()
     {
@@ -38,18 +45,19 @@ public class FuseService(IFuseOperations operations, string[] args) : IDisposabl
         }
 #endif
 
-        ServiceThread = new(ServiceThreadProcedure)
-        {
-            Name = "FuseService"
-        };
-
-        ServiceThread.Start();
+        ServiceTask = Task.Factory.StartNew(
+            ServiceThreadProcedure,
+            CancellationToken.None,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default);
     }
 
     private void ServiceThreadProcedure()
     {
         try
         {
+            ThreadId = Environment.CurrentManagedThreadId;
+
             Operations.Mount(_args);
 
             OnDismounted(EventArgs.Empty);
@@ -64,15 +72,48 @@ public class FuseService(IFuseOperations operations, string[] args) : IDisposabl
         }
     }
 
-    public void WaitExit()
+    public void WaitForExit()
     {
-        if (ServiceThread == null ||
-            ServiceThread.ManagedThreadId == Environment.CurrentManagedThreadId)
+        if (ServiceTask == null ||
+            ThreadId == Environment.CurrentManagedThreadId)
         {
             return;
         }
 
-        ServiceThread.Join();
+        ServiceTask.Wait();
+    }
+
+    public bool WaitForExit(TimeSpan timeout)
+    {
+        if (ServiceTask == null ||
+            ThreadId == Environment.CurrentManagedThreadId)
+        {
+            return true;
+        }
+
+        return ServiceTask.Wait(timeout);
+    }
+
+    public ValueTask WaitForExitAsync()
+    {
+        if (ServiceTask == null ||
+            ThreadId == Environment.CurrentManagedThreadId)
+        {
+            return default;
+        }
+
+        return new(ServiceTask);
+    }
+
+    public async ValueTask<bool> WaitForExitAsync(TimeSpan timeout)
+    {
+        if (ServiceTask == null ||
+            ThreadId == Environment.CurrentManagedThreadId)
+        {
+            return true;
+        }
+
+        return ServiceTask == await Task.WhenAny(ServiceTask, Task.Delay(timeout)).ConfigureAwait(false);
     }
 
     protected virtual void OnError(ThreadExceptionEventArgs e) => Error?.Invoke(this, e);
@@ -91,18 +132,27 @@ public class FuseService(IFuseOperations operations, string[] args) : IDisposabl
             if (disposing)
             {
                 // TODO: dispose managed state (managed objects).
-                if (ServiceThread != null && ServiceThread.IsAlive &&
+                if (ServiceTask != null && !ServiceTask.IsCompleted &&
                     MountPoint != null && !string.IsNullOrWhiteSpace(MountPoint))
                 {
                     Trace.WriteLine($"Requesting dismount for Fuse file system '{MountPoint}'");
 
-                    _ = NativeMethods.unmount(MountPoint, 0);
+                    OnDismounting(EventArgs.Empty);
 
-                    if (ServiceThread.ManagedThreadId != Environment.CurrentManagedThreadId)
+                    if (new DriveInfo(MountPoint).DriveFormat.StartsWith("fuse", StringComparison.Ordinal)
+                        && !Fuse.TryUnmount(MountPoint, out var umountResult))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine(@$"
+Unmount failed for '{MountPoint}': {umountResult}");
+                        Console.ResetColor();
+                    }
+
+                    if (ThreadId != Environment.CurrentManagedThreadId)
                     {
                         Trace.WriteLine($"Waiting for Fuse file system '{MountPoint}' service thread to stop");
 
-                        ServiceThread.Join();
+                        ServiceTask.Wait();
 
                         Trace.WriteLine($"Fuse file system '{MountPoint}' service thread stopped.");
                     }
@@ -114,9 +164,11 @@ public class FuseService(IFuseOperations operations, string[] args) : IDisposabl
             // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
 
             // TODO: set large fields to null.
-            ServiceThread = null;
+            ServiceTask = null;
         }
     }
+
+    protected virtual void OnDismounting(EventArgs e) => Dismounting?.Invoke(this, e);
 
     // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
     ~FuseService()
