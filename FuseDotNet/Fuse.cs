@@ -19,6 +19,7 @@ namespace FuseDotNet;
 #if NET5_0_OR_GREATER
 [SupportedOSPlatform("linux")]
 [SupportedOSPlatform("freebsd")]
+[SupportedOSPlatform("macos")]
 #endif
 public static class Fuse
 {
@@ -164,6 +165,10 @@ public static class Fuse
         }
 #if NETCOREAPP
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+        {
+            rc = NativeMethods.unmount(dir, 0);
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             rc = NativeMethods.unmount(dir, 0);
         }
