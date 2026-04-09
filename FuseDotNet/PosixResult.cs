@@ -15,6 +15,7 @@ namespace FuseDotNet;
 #if NET5_0_OR_GREATER
 [SupportedOSPlatform("linux")]
 [SupportedOSPlatform("freebsd")]
+[SupportedOSPlatform("macos")]
 #endif
 public readonly struct PosixResult(int value) : IEquatable<PosixResult>
 {
@@ -67,6 +68,12 @@ public readonly struct PosixResult(int value) : IEquatable<PosixResult>
             ENOTSUP = FreeBSDResult.ENOTSUP;
             ENOSYS = FreeBSDResult.ENOSYS;
             ENAMETOOLONG = FreeBSDResult.ENAMETOOLONG;
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            ENOTSUP = 45;
+            ENOSYS = 78;
+            ENAMETOOLONG = 63;
         }
 #endif
         else
