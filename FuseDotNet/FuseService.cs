@@ -13,9 +13,12 @@ namespace FuseDotNet;
 #if NET5_0_OR_GREATER
 [SupportedOSPlatform("linux")]
 [SupportedOSPlatform("freebsd")]
+[SupportedOSPlatform("macos")]
 #endif
 public class FuseService(IFuseOperations operations, string[] args) : IDisposable
 {
+    private static readonly TraceSource TraceSource = new(nameof(FuseService));
+
     public event EventHandler? Dismounting;
 
     public event EventHandler? Stopped;
@@ -45,6 +48,8 @@ public class FuseService(IFuseOperations operations, string[] args) : IDisposabl
         }
 #endif
 
+        TraceSource.TraceEvent(TraceEventType.Information, 0, $"Starting FuseService for mount point '{MountPoint ?? "(unknown)"}'");
+
         ServiceTask = Task.Factory.StartNew(
             ServiceThreadProcedure,
             CancellationToken.None,
@@ -57,17 +62,21 @@ public class FuseService(IFuseOperations operations, string[] args) : IDisposabl
         try
         {
             ThreadId = Environment.CurrentManagedThreadId;
+            TraceSource.TraceEvent(TraceEventType.Verbose, 0, $"FuseService worker thread {ThreadId} entering mount loop for '{MountPoint ?? "(unknown)"}'");
 
             Operations.Mount(_args);
 
+            TraceSource.TraceEvent(TraceEventType.Information, 0, $"FuseService mount loop exited normally for '{MountPoint ?? "(unknown)"}'");
             OnDismounted(EventArgs.Empty);
         }
         catch (Exception ex)
         {
+            TraceSource.TraceEvent(TraceEventType.Error, 0, $"FuseService worker thread failed for '{MountPoint ?? "(unknown)"}': {ex}");
             OnError(new(ex));
         }
         finally
         {
+            TraceSource.TraceEvent(TraceEventType.Verbose, 0, $"Disposing FuseService operations for '{MountPoint ?? "(unknown)"}'");
             (Operations as IDisposable)?.Dispose();
         }
     }
@@ -135,7 +144,7 @@ public class FuseService(IFuseOperations operations, string[] args) : IDisposabl
                 if (ServiceTask != null && !ServiceTask.IsCompleted &&
                     MountPoint != null && !string.IsNullOrWhiteSpace(MountPoint))
                 {
-                    Trace.WriteLine($"Requesting dismount for Fuse file system '{MountPoint}'");
+                    TraceSource.TraceEvent(TraceEventType.Information, 0, $"Requesting dismount for Fuse file system '{MountPoint}'");
 
                     OnDismounting(EventArgs.Empty);
 
@@ -150,11 +159,11 @@ Unmount failed for '{MountPoint}': {umountResult}");
 
                     if (ThreadId != Environment.CurrentManagedThreadId)
                     {
-                        Trace.WriteLine($"Waiting for Fuse file system '{MountPoint}' service thread to stop");
+                        TraceSource.TraceEvent(TraceEventType.Information, 0, $"Waiting for Fuse file system '{MountPoint}' service thread to stop");
 
                         ServiceTask.Wait();
 
-                        Trace.WriteLine($"Fuse file system '{MountPoint}' service thread stopped.");
+                        TraceSource.TraceEvent(TraceEventType.Information, 0, $"Fuse file system '{MountPoint}' service thread stopped.");
                     }
                 }
 

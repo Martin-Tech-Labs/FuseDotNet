@@ -40,7 +40,7 @@ internal static class NativeMethods
     /// <param name="userData"></param>
     /// <returns><see cref="PosixResult"/></returns>
     [DllImport(LIB_FUSE, CallingConvention = CallingConvention.Cdecl, EntryPoint = "fuse_main_real", ExactSpelling = true)]
-    private static extern PosixResult fuse_main_real_default(int argc,
+    private static extern PosixResult fuse_main_real_fuse3(int argc,
         [In, MarshalAs(UnmanagedType.LPArray)] nint[] argv,
         [In] FuseOperations? operations, nint operationsSize, nint userData);
 
@@ -59,7 +59,7 @@ internal static class NativeMethods
             return fuse_main_real_macos(argc, argv, operations, operationsSize, userData);
         }
 #endif
-        return fuse_main_real_default(argc, argv, operations, operationsSize, userData);
+        return fuse_main_real_fuse3(argc, argv, operations, operationsSize, userData);
     }
 
     [DllImport(LIB_C, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true, SetLastError = true)]
