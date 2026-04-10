@@ -20,11 +20,14 @@ namespace FuseDotNet.Native;
 [StructLayout(LayoutKind.Sequential, Pack = 4)]
 internal sealed class FuseOperations
 {
+    private static bool IsMacOS => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+
     #region Delegates
 
     public delegate int fuse_f_fill_dir(nint buf, [MarshalAs(NativeMethods.UnmanagedStringType)] string name, nint stat, long off, FuseFillDirFlags flags);
 
     public delegate int fuse_f_getattr(nint path, nint stat, ref FuseFileInfo fileInfo);
+    public delegate int fuse_f_setattr_x(nint path, nint stat, nint x);
 	public delegate int fuse_f_readlink(nint path, nint target, nint size);
 	public delegate int fuse_f_mknod(nint path, PosixFileMode mode, int dev);
 	public delegate int fuse_f_mkdir(nint path, PosixFileMode mode);
@@ -32,14 +35,19 @@ internal sealed class FuseOperations
 	public delegate int fuse_f_rmdir(nint path);
 	public delegate int fuse_f_symlink(nint path, nint target);
 	public delegate int fuse_f_rename(nint path, nint target);
+	public delegate int fuse_f_rename_x(nint path, nint target, uint flags);
 	public delegate int fuse_f_link(nint path, nint target);
 	public delegate int fuse_f_chmod(nint path, PosixFileMode mode);
+	public delegate int fuse_f_chmod_x(nint path, PosixFileMode mode, ref FuseFileInfo fileInfo);
 	public delegate int fuse_f_chown(nint path, int uid, int gid);
+	public delegate int fuse_f_chown_x(nint path, int uid, int gid, ref FuseFileInfo fileInfo);
 	public delegate int fuse_f_truncate(nint path, long size);
+	public delegate int fuse_f_truncate_x(nint path, long size, ref FuseFileInfo fileInfo);
 	public delegate int fuse_f_open(nint path, ref FuseFileInfo fileInfo);
 	public delegate int fuse_f_read(nint path, nint buffer, nint size, long position, ref FuseFileInfo fileInfo);
 	public delegate int fuse_f_write(nint path, nint buffer, nint size, long position, ref FuseFileInfo fileInfo);
 	public delegate int fuse_f_statfs(nint path, nint statptr);
+	public delegate int fuse_f_statfs_x(nint path, nint statptr, nint x);
 	public delegate int fuse_f_flush(nint path, ref FuseFileInfo fileInfo);
 	public delegate int fuse_f_release(nint path, ref FuseFileInfo fileInfo);
 	public delegate int fuse_f_fsync(nint path, int datasync, ref FuseFileInfo fileInfo);
@@ -69,6 +77,7 @@ internal sealed class FuseOperations
 	#endregion Delegates
 
 	public fuse_f_getattr? getattr;
+	public fuse_f_setattr_x? setattr_x;
 	public fuse_f_readlink? readlink;
 	public fuse_f_mknod? mknod;
 	public fuse_f_mkdir? mkdir;
@@ -76,14 +85,19 @@ internal sealed class FuseOperations
 	public fuse_f_rmdir? rmdir;
 	public fuse_f_symlink? symlink;
 	public fuse_f_rename? rename;
+	public fuse_f_rename_x? rename_x;
 	public fuse_f_link? link;
 	public fuse_f_chmod? chmod;
+	public fuse_f_chmod_x? chmod_x;
 	public fuse_f_chown? chown;
+	public fuse_f_chown_x? chown_x;
 	public fuse_f_truncate? truncate;
+	public fuse_f_truncate_x? truncate_x;
 	public fuse_f_open? open;
 	public fuse_f_read? read;
 	public fuse_f_write? write;
 	public fuse_f_statfs? statfs;
+	public fuse_f_statfs_x? statfs_x;
 	public fuse_f_flush? flush;
 	public fuse_f_release? release;
 	public fuse_f_fsync? fsync;
