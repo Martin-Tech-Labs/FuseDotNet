@@ -7,6 +7,11 @@ using System.Runtime.Versioning;
 
 namespace FuseDotNet;
 
+#if NET5_0_OR_GREATER
+[SupportedOSPlatform("linux")]
+[SupportedOSPlatform("freebsd")]
+[SupportedOSPlatform("macos")]
+#endif
 public struct FuseFileStat
 {
     unsafe static FuseFileStat()
@@ -36,6 +41,16 @@ public struct FuseFileStat
         {
             pMarshalToNative = (nint pNative, in FuseFileStat stat) => ((FreeBSDX64FileStat*)pNative)->Initialize(stat);
             NativeStructSize = sizeof(FreeBSDX64FileStat);
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && RuntimeInformation.OSArchitecture == Architecture.Arm64)
+        {
+            pMarshalToNative = (nint pNative, in FuseFileStat stat) => ((MacOSArm64FileStat*)pNative)->Initialize(stat);
+            NativeStructSize = sizeof(MacOSArm64FileStat);
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && RuntimeInformation.OSArchitecture == Architecture.X64)
+        {
+            pMarshalToNative = (nint pNative, in FuseFileStat stat) => ((MacOSX64FileStat*)pNative)->Initialize(stat);
+            NativeStructSize = sizeof(MacOSX64FileStat);
         }
 #endif
         else
@@ -103,24 +118,24 @@ public struct FreeBSDX64FileStat
         }
     }
 
-    public long st_dev { get; set; }            /* inode's device */
-    public long st_ino { get; set; }            /* inode's number */
-    public long st_nlink { get; set; }          /* number of hard links */
-    public PosixFileMode st_mode { get; set; }  /* inode protection mode */
+    public long st_dev { get; set; }
+    public long st_ino { get; set; }
+    public long st_nlink { get; set; }
+    public PosixFileMode st_mode { get; set; }
     private readonly short st_padding0;
-    public uint st_uid { get; set; }            /* user ID of the file's owner */
-    public uint st_gid { get; set; }            /* group ID of the file's group */
+    public uint st_uid { get; set; }
+    public uint st_gid { get; set; }
     private readonly int st_padding1;
-    public long st_rdev { get; set; }           /* device type */
-    public TimeSpec st_atim { get; set; }       /* time of last access */
-    public TimeSpec st_mtim { get; set; }       /* time of last data modification */
-    public TimeSpec st_ctim { get; set; }       /* time of last file status change */
-    public TimeSpec st_birthtim { get; set; }   /* time of file creation */
-    public long st_size { get; set; }           /* file size, in bytes */
-    public long st_blocks { get; set; }         /* blocks allocated for file */
-    public int st_blksize { get; set; }         /* optimal blocksize for I/O */
-    public uint st_flags;                       /* user defined flags for file */
-    public long st_gen { get; set; }            /* file generation number */
+    public long st_rdev { get; set; }
+    public TimeSpec st_atim { get; set; }
+    public TimeSpec st_mtim { get; set; }
+    public TimeSpec st_ctim { get; set; }
+    public TimeSpec st_birthtim { get; set; }
+    public long st_size { get; set; }
+    public long st_blocks { get; set; }
+    public int st_blksize { get; set; }
+    public uint st_flags;
+    public long st_gen { get; set; }
     private unsafe fixed long st_spare[10];
 }
 
@@ -155,33 +170,19 @@ public struct LinuxX64FileStat
     }
 
     public long st_dev;
-
     public long st_ino;
-
     public long st_nlink;
-
     public PosixFileMode st_mode;
-
     public uint st_uid;
-
     public uint st_gid;
-
     private readonly int pad0;
-
     public long st_rdev;
-
     public long st_size;
-
     public int st_blksize;
-
     public long st_blocks;
-
     public TimeSpec st_atim;
-
     public TimeSpec st_mtim;
-
     public TimeSpec st_ctim;
-
     private unsafe fixed long __glibc_reserved[3];
 }
 
@@ -219,35 +220,20 @@ public struct LinuxArm64FileStat
     }
 
     public long st_dev;
-
     public long st_ino;
-
     public PosixFileMode st_mode;
-
     public uint st_nlink;
-
     public uint st_uid;
-
     public uint st_gid;
-
     public long st_rdev;
-
     private readonly long pad1;
-
     public long st_size;
-
     public int st_blksize;
-
     private readonly int pad2;
-
     public long st_blocks;
-
     public TimeSpec st_atim;
-
     public TimeSpec st_mtim;
-
     public TimeSpec st_ctim;
-
     private unsafe fixed int __glibc_reserved[2];
 }
 
@@ -286,33 +272,19 @@ public struct LinuxX86FileStat
     }
 
     public long st_dev;
-
     private readonly long pad1;
-
     public PosixFileMode st_mode;
-
     public int st_nlink;
-
     public uint st_uid;
-
     public uint st_gid;
-
     public long st_rdev;
-
     private readonly int pad2;
-
     public long st_size;
-
     public int st_blksize;
-
     public long st_blocks;
-
     public TimeSpec st_atim;
-
     public TimeSpec st_mtim;
-
     public TimeSpec st_ctim;
-
     public long st_ino;
 }
 
@@ -350,50 +322,142 @@ public struct LinuxArm32FileStat
     }
 
     public long st_dev;
-
     private readonly long pad1;
-
     public PosixFileMode st_mode;
-
     private readonly short pad2;
-
     public int st_nlink;
-
     public uint st_uid;
-
     public uint st_gid;
-
     public long st_rdev;
-
     private readonly long pad3;
-
     public long st_size;
-
     public int st_blksize;
-
     private readonly int pad4;
-
     public long st_blocks;
-
     public TimeSpec st_atim;
-
     public TimeSpec st_mtim;
-
     public TimeSpec st_ctim;
-
     public long st_ino;
+}
+
+[StructLayout(LayoutKind.Sequential, Pack = 4)]
+public struct MacOSArm64FileStat
+{
+    public void Initialize(in FuseFileStat stat)
+    {
+        checked
+        {
+            st_dev = (int)stat.st_dev;
+            st_mode = (ushort)stat.st_mode;
+            st_nlink = (ushort)stat.st_nlink;
+            st_ino = stat.st_ino;
+            st_uid = stat.st_uid;
+            st_gid = stat.st_gid;
+            st_rdev = (int)stat.st_rdev;
+            st_atimespec = stat.st_atim;
+            st_mtimespec = stat.st_mtim;
+            st_ctimespec = stat.st_ctim;
+            st_birthtimespec = stat.st_birthtim;
+            st_size = stat.st_size;
+            st_blocks = stat.st_blocks;
+            st_blksize = stat.st_blksize;
+            st_flags = 0;
+            st_gen = (uint)stat.st_gen;
+        }
+    }
+
+    unsafe static MacOSArm64FileStat()
+    {
+        if (sizeof(MacOSArm64FileStat) != 144)
+        {
+            throw new PlatformNotSupportedException($"Invalid size {sizeof(MacOSArm64FileStat)} of Darwin stat structure, expected 144 (wrong structure pack settings?)");
+        }
+    }
+
+    public int st_dev;
+    public ushort st_mode;
+    public ushort st_nlink;
+    public long st_ino;
+    public uint st_uid;
+    public uint st_gid;
+    public int st_rdev;
+    public TimeSpec st_atimespec;
+    public TimeSpec st_mtimespec;
+    public TimeSpec st_ctimespec;
+    public TimeSpec st_birthtimespec;
+    public long st_size;
+    public long st_blocks;
+    public int st_blksize;
+    public uint st_flags;
+    public uint st_gen;
+    public int st_lspare;
+    public long st_qspare1;
+    public long st_qspare2;
+}
+
+[StructLayout(LayoutKind.Sequential, Pack = 4)]
+public struct MacOSX64FileStat
+{
+    public void Initialize(in FuseFileStat stat)
+    {
+        checked
+        {
+            st_dev = (int)stat.st_dev;
+            st_mode = (ushort)stat.st_mode;
+            st_nlink = (ushort)stat.st_nlink;
+            st_ino = stat.st_ino;
+            st_uid = stat.st_uid;
+            st_gid = stat.st_gid;
+            st_rdev = (int)stat.st_rdev;
+            st_atimespec = stat.st_atim;
+            st_mtimespec = stat.st_mtim;
+            st_ctimespec = stat.st_ctim;
+            st_birthtimespec = stat.st_birthtim;
+            st_size = stat.st_size;
+            st_blocks = stat.st_blocks;
+            st_blksize = stat.st_blksize;
+            st_flags = 0;
+            st_gen = (uint)stat.st_gen;
+        }
+    }
+
+    unsafe static MacOSX64FileStat()
+    {
+        if (sizeof(MacOSX64FileStat) != 144)
+        {
+            throw new PlatformNotSupportedException($"Invalid size {sizeof(MacOSX64FileStat)} of Darwin stat structure, expected 144 (wrong structure pack settings?)");
+        }
+    }
+
+    public int st_dev;
+    public ushort st_mode;
+    public ushort st_nlink;
+    public long st_ino;
+    public uint st_uid;
+    public uint st_gid;
+    public int st_rdev;
+    public TimeSpec st_atimespec;
+    public TimeSpec st_mtimespec;
+    public TimeSpec st_ctimespec;
+    public TimeSpec st_birthtimespec;
+    public long st_size;
+    public long st_blocks;
+    public int st_blksize;
+    public uint st_flags;
+    public uint st_gen;
+    public int st_lspare;
+    public long st_qspare1;
+    public long st_qspare2;
 }
 
 [StructLayout(LayoutKind.Sequential)]
 public readonly struct TimeSpec(long msec) : IEquatable<TimeSpec>, IComparable<TimeSpec>
 {
-    public readonly nint tv_sec = (nint)(msec / 1000);       /* seconds */
-    public readonly nint tv_nsec = (nint)(msec % 1000 * 1000000);        /* and nanoseconds */
+    public readonly nint tv_sec = (nint)(msec / 1000);
+    public readonly nint tv_nsec = (nint)(msec % 1000 * 1000000);
 
     public bool IsOmit => tv_nsec == -2;
-
     public bool IsPseudoNow => tv_nsec == -1;
-
     public long total_msec => (long)tv_sec * 1000 + tv_nsec / 1000000;
 
     public TimeSpec(DateTimeOffset dateTime)
@@ -414,31 +478,17 @@ public readonly struct TimeSpec(long msec) : IEquatable<TimeSpec>, IComparable<T
     public static TimeSpec Now() => NativeMethods.time(out _);
 
     public DateTimeOffset ToDateTime() => IsPseudoNow ? DateTimeOffset.UtcNow : DateTimeOffset.FromUnixTimeMilliseconds(total_msec);
-
     public override string ToString() => ToDateTime().ToString();
-
     public override int GetHashCode() => HashCode.Combine(tv_sec, tv_nsec);
-
     public int CompareTo(TimeSpec other) => total_msec.CompareTo(other.total_msec);
-
     public bool Equals(TimeSpec other) => other.tv_sec == tv_sec && other.tv_nsec == tv_nsec;
-
     public override bool Equals(object? obj) => obj is TimeSpec other && Equals(other);
-
     public static bool operator ==(TimeSpec left, TimeSpec right) => left.Equals(right);
-
     public static bool operator !=(TimeSpec left, TimeSpec right) => !(left == right);
-
     public static bool operator <(TimeSpec left, TimeSpec right) => left.CompareTo(right) < 0;
-
     public static bool operator <=(TimeSpec left, TimeSpec right) => left.CompareTo(right) <= 0;
-
     public static bool operator >(TimeSpec left, TimeSpec right) => left.CompareTo(right) > 0;
-
     public static bool operator >=(TimeSpec left, TimeSpec right) => left.CompareTo(right) >= 0;
-
     public static implicit operator TimeSpec(DateTimeOffset dateTime) => new(dateTime);
-
     public static implicit operator TimeSpec(DateTime dateTime) => new(dateTime);
 }
-
