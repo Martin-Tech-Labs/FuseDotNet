@@ -155,6 +155,18 @@ public static class Fuse
         }
     }
 
+    public static FuseContext GetContext()
+    {
+        var ptr = NativeMethods.fuse_get_context();
+        if (ptr == 0)
+        {
+            throw new InvalidOperationException("fuse_get_context() returned null. This API is only valid during a filesystem operation.");
+        }
+
+        var native = Marshal.PtrToStructure<FuseContext.NativeFuseContext>(ptr);
+        return new FuseContext(native.fuse, native.uid, native.gid, native.pid, native.private_data, native.umask);
+    }
+
     public static void Unmount(string dir)
     {
         if (!TryUnmount(dir, out var result))

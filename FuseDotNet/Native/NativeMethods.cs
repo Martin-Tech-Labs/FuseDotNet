@@ -79,4 +79,21 @@ internal static class NativeMethods
 
     [DllImport(LIB_C, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true, SetLastError = true)]
     internal static extern nint strerror(int errno);
+
+    [DllImport(LIB_FUSE, CallingConvention = CallingConvention.Cdecl, EntryPoint = "fuse_get_context", ExactSpelling = true)]
+    private static extern nint fuse_get_context_fuse3();
+
+    [DllImport(LIB_FUSE_MACOS, CallingConvention = CallingConvention.Cdecl, EntryPoint = "fuse_get_context", ExactSpelling = true)]
+    private static extern nint fuse_get_context_macos();
+
+    internal static nint fuse_get_context()
+    {
+#if NET5_0_OR_GREATER
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            return fuse_get_context_macos();
+        }
+#endif
+        return fuse_get_context_fuse3();
+    }
 }
