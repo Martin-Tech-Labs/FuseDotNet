@@ -28,6 +28,17 @@ internal static class NativeMethods
 
     private const string LIB_C = "libc";
 
+    /// <summary>
+    /// Mount a new Fuse Volume.
+    /// This function block until the device is unmounted.
+    /// If the mount fails, it will directly return an error.
+    /// </summary>
+    /// <param name="argc"></param>
+    /// <param name="argv">Array of pointers to UTF8 encoded arguments that describe the mount.</param>
+    /// <param name="operations">Instance of <see cref="FuseOperations"/> that will be called for each request made by the kernel.</param>
+    /// <param name="operationsSize"></param>
+    /// <param name="userData"></param>
+    /// <returns><see cref="PosixResult"/></returns>
     [DllImport(LIB_FUSE, CallingConvention = CallingConvention.Cdecl, EntryPoint = "fuse_main_real", ExactSpelling = true)]
     private static extern PosixResult fuse_main_real_fuse3(int argc,
         [In, MarshalAs(UnmanagedType.LPArray)] nint[] argv,
