@@ -469,6 +469,11 @@ internal sealed class FuseOperationProxy(IFuseOperations operations, ILogger log
 
                     var fill_result = fuse_fill_dir(buf, name[0], stat, file.Offset, file.Flags);
 
+                    if (logger.DebugEnabled)
+                    {
+                        logger.Debug($"fuse_fill_dir(name='{file.Name}', offset={file.Offset}, flags={file.Flags}) -> {fill_result}");
+                    }
+
                     if (fill_result != 0)
                     {
                         break;
