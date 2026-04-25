@@ -425,6 +425,11 @@ internal sealed class FuseOperationProxy(IFuseOperations operations, ILogger log
 
             var result = operations.ReadDir(pathPtr, out var entries, ref fileInfo, offset, flags);
 
+            if (logger.DebugEnabled)
+            {
+                logger.Debug($"readdir(): operations.ReadDir returned {result} for offset={offset}, flags={flags}");
+            }
+
             if (result != PosixResult.Success)
             {
                 return -result;
@@ -449,7 +454,7 @@ internal sealed class FuseOperationProxy(IFuseOperations operations, ILogger log
                 {
                     if (logger.DebugEnabled)
                     {
-                        logger.Debug($"Directory entry: {file}");
+                        logger.Debug($"Directory entry: name='{file.Name}', offset={file.Offset}, flags={file.Flags}, stat={file.Stat}");
                     }
 
                     file.Stat.MarshalToNative((nint)stat);
@@ -471,7 +476,7 @@ internal sealed class FuseOperationProxy(IFuseOperations operations, ILogger log
 
                     if (logger.DebugEnabled)
                     {
-                        logger.Debug($"fuse_fill_dir(name='{file.Name}', offset={file.Offset}, flags={file.Flags}) -> {fill_result}");
+                        logger.Debug($"fuse_fill_dir(name='{file.Name}', emittedOffset={file.Offset}, flags={file.Flags}) -> {fill_result}");
                     }
 
                     if (fill_result != 0)
