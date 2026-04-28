@@ -87,32 +87,24 @@ public static class Fuse
 
         var fuseOperationProxy = new FuseOperationProxy(operations, logger);
 
-        var isMacOS = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-
         var fuseOperations = new FuseOperations
         {
             getattr = fuseOperationProxy.getattr,
-            setattr_x = null,
             readlink = fuseOperationProxy.readlink,
             mknod = null, // fuseOperationProxy.mknod,
             mkdir = fuseOperationProxy.mkdir,
             unlink = fuseOperationProxy.unlink,
             rmdir = fuseOperationProxy.rmdir,
             symlink = fuseOperationProxy.symlink,
-            rename = isMacOS ? null : fuseOperationProxy.rename,
-            rename_x = isMacOS ? ((nint path, nint target, uint flags) => fuseOperationProxy.rename(path, target)) : null,
+            rename = (nint path, nint target, uint flags) => fuseOperationProxy.rename(path, target),
             link = fuseOperationProxy.link,
-            chmod = isMacOS ? null : fuseOperationProxy.chmod,
-            chmod_x = isMacOS ? ((nint path, PosixFileMode mode, ref FuseFileInfo fileInfo) => fuseOperationProxy.chmod(path, mode)) : null,
-            chown = isMacOS ? null : fuseOperationProxy.chown,
-            chown_x = isMacOS ? ((nint path, int uid, int gid, ref FuseFileInfo fileInfo) => fuseOperationProxy.chown(path, uid, gid)) : null,
-            truncate = isMacOS ? null : fuseOperationProxy.truncate,
-            truncate_x = isMacOS ? ((nint path, long size, ref FuseFileInfo fileInfo) => fuseOperationProxy.truncate(path, size)) : null,
+            chmod = (nint path, PosixFileMode mode, ref FuseFileInfo fileInfo) => fuseOperationProxy.chmod(path, mode),
+            chown = (nint path, int uid, int gid, ref FuseFileInfo fileInfo) => fuseOperationProxy.chown(path, uid, gid),
+            truncate = (nint path, long size, ref FuseFileInfo fileInfo) => fuseOperationProxy.truncate(path, size),
             open = fuseOperationProxy.open,
             read = fuseOperationProxy.read,
             write = fuseOperationProxy.write,
-            statfs = isMacOS ? null : fuseOperationProxy.statfs,
-            statfs_x = isMacOS ? ((nint path, nint statptr, nint x) => fuseOperationProxy.statfs(path, statptr)) : null,
+            statfs = fuseOperationProxy.statfs,
             flush = fuseOperationProxy.flush,
             release = fuseOperationProxy.release,
             fsync = fuseOperationProxy.fsync,
