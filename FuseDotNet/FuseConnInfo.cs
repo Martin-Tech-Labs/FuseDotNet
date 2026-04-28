@@ -26,16 +26,6 @@ public unsafe struct FuseConnInfo
     public readonly uint proto_minor;
 
     /**
-     * Maximum size of the write buffer
-     */
-    public uint max_write;
-
-    /**
-     * Maximum size of the read buffer
-     */
-    public uint max_read;
-
-    /**
      * Maximum readahead
      */
     public uint max_readahead;
@@ -51,14 +41,29 @@ public unsafe struct FuseConnInfo
     public FuseCapabilities want;
 
     /**
+     * Maximum size of the write buffer
+     */
+    public uint max_write;
+
+    /**
      * Maximum number of backgrounded requests
      */
-    public uint max_background;
+    public ushort max_background;
 
     /**
      * Kernel congestion threshold parameter
      */
-    public uint congestion_threshold;
+    public ushort congestion_threshold;
+
+    /**
+     * Maximum size of pages requested
+     */
+    public uint max_pages;
+
+    /**
+     * Map alignment requirement
+     */
+    public uint map_alignment;
 
     /**
 	 * When FUSE_CAP_WRITEBACK_CACHE is enabled, the kernel is responsible
@@ -78,9 +83,39 @@ public unsafe struct FuseConnInfo
     public uint time_gran;
 
     /**
+     * Maximum number of stacked backing filesystems supported.
+     */
+    public ushort max_backing_stack_depth;
+
+    /**
+     * Padding/flags area in current headers.
+     */
+    public ushort padding;
+
+    /**
+     * Extended capability flags, supported by kernel.
+     */
+    public ulong capable_ext;
+
+    /**
+     * Extended capability flags, requested by filesystem.
+     */
+    public ulong want_ext;
+
+    /**
+     * Darwin-specific capabilities supported by kernel.
+     */
+    public ulong capable_darwin;
+
+    /**
+     * Darwin-specific capabilities requested by filesystem.
+     */
+    public ulong want_darwin;
+
+    /**
      * For future use.
      */
-    public fixed uint reserved[22];
+    public fixed uint reserved[10];
 }
 
 [Flags]
