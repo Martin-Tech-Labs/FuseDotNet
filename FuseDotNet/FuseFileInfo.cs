@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Runtime.InteropServices;
 
 #pragma warning disable 649,169
@@ -7,46 +6,18 @@ using System.Runtime.InteropServices;
 namespace FuseDotNet;
 
 [Flags]
-public enum FuseFileInfoOptions : long
+public enum FuseFileInfoOptions : ulong
 {
     none = 0x0,
-
-    /** In case of a write operation indicates if this was caused by a
-        writepage */
     write_page = 0x1,
-
-    /** Can be filled in by open, to use direct I/O on this file.
-           Introduced in version 2.4 */
     direct_io = 0x2,
-
-    /** Can be filled in by open, to indicate, that cached file data
-        need not be invalidated.  Introduced in version 2.4 */
     keep_cache = 0x4,
-
-    /** Indicates a flush operation.  Set in flush operation, also
-        maybe set in highlevel lock operation and lowlevel release
-        operation.  Introduced in version 2.6 */
     flush = 0x8,
-
-    /** Can be filled in by open, to indicate that the file is not
-    seekable.  Introduced in version 2.8 */
     nonseekable = 0x10,
-
-    /** Indicates that flock locks for this file should be
-       released.  If set, lock_owner shall contain a valid value.
-       May only be set in ->release().  Introduced in version
-       2.9 */
     flock_release = 0x20,
-
-    /** Can be filled in by opendir. It signals the kernel to
-        enable caching of entries returned by readdir().  Has no
-        effect when set in other contexts (in particular it does
-        nothing when set by open()). */
     cache_readdir = 0x40,
-
-    /** Can be filled in by open, to indicate that flush is not needed
-	    on close. */
     noflush = 0x80,
+    parallel_direct_writes = 0x100,
 }
 
 /// <summary>
@@ -59,51 +30,37 @@ public enum FuseFileInfoOptions : long
 [StructLayout(LayoutKind.Sequential)]
 public struct FuseFileInfo
 {
-    static unsafe FuseFileInfo()
-    {
-        switch (RuntimeInformation.OSArchitecture)
-        {
-            case Architecture.X86:
-                if (sizeof(FuseFileInfo) != 32)
-                {
-                    throw new PlatformNotSupportedException($"Invalid packing of structure FuseFileInfo. Should be 32 bytes, is {sizeof(FuseFileInfo)} bytes");
-                }
-
-                break;
-
-            case Architecture.X64 or Architecture.Arm or Architecture.Arm64:
-                if (sizeof(FuseFileInfo) != 40)
-                {
-                    throw new PlatformNotSupportedException($"Invalid packing of structure FuseFileInfo. Should be 40 bytes, is {sizeof(FuseFileInfo)} bytes");
-                }
-
-                break;
-
-            default:
-                throw new PlatformNotSupportedException($"Current platform {RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture} not supported by FuseDotNet library");
-        }
-    }
-
-    /** Open flags.  Available in open() and release() */
+    /** Open flags. Available in open() and release() */
     public readonly PosixOpenFlags flags;
 
-    public FuseFileInfoOptions options;
+    /** Bitfield options area from fuse_file_info */
+    private ulong bitfieldOptions;
 
-    /** File handle.  May be filled in by filesystem in open().
-        Available in all other file operations */
-    private long fh;
+    /** File handle. May be filled in by filesystem in open(). Available in all other file operations */
+    private ulong fh;
 
-    /** Lock owner id.  Available in locking operations and flush */
+    /** Lock owner id. Available in locking operations and flush */
     public ulong lock_owner;
 
-    /** Requested poll events.  Available in ->poll.  Only set on kernels
-    which support it.  If unsupported, this field is set to zero. */
+    /** Requested poll events. Available in ->poll. */
     public readonly uint poll_events;
 
+    /** Backing id / reserved future field in newer headers */
+    public int backing_id;
+
+    /** Compatibility padding / future tail */
+    private ulong compat1;
+    private ulong compat2;
+
+    public FuseFileInfoOptions options
+    {
+        readonly get => (FuseFileInfoOptions)bitfieldOptions;
+        set => bitfieldOptions = (ulong)value;
+    }
+
     /// <summary>
-    /// Gets or sets context that can be used to carry information between operation.
-    /// The Context can carry whatever type like <c><see cref="FileStream"/></c>, <c>struct</c>, <c>int</c>,
-    /// or internal reference that will help the implementation understand the request context of the event.
+    /// Gets or sets context that can be used to carry information between operations.
+    /// This is mapped onto the native file handle storage (`fh`).
     /// </summary>
     public object? Context
     {
@@ -131,14 +88,11 @@ public struct FuseFileInfo
 
             if (value != null)
             {
-                fh = (nint)GCHandle.Alloc(value);
+                fh = (ulong)(nint)GCHandle.Alloc(value);
             }
         }
     }
 
-    /// <summary>Returns a string that represents the current object.</summary>
-    /// <returns>A string that represents the current object.</returns>
     public override readonly string ToString()
         => FormatProviders.FuseFormat($"{{Context = {Context}, Options = {options}, Flags = {flags}, FileHandle = 0x{fh:X}}}");
 }
-
