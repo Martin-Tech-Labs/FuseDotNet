@@ -2,6 +2,7 @@ using FuseDotNet.Extensions;
 using FuseDotNet.Logging;
 using System;
 using System.Buffers;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 
@@ -435,7 +436,9 @@ internal sealed class FuseOperationProxy(IFuseOperations operations, ILogger log
                 return -result;
             }
 
+            var isMacOS = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
             var fuse_fill_dir = (delegate* unmanaged[Cdecl]<nint, in byte, void*, long, FuseFillDirFlags, int>)fuse_fill_dir_t;
+            var fuse_fill_dir_darwin = (delegate* unmanaged[Cdecl]<nint, in byte, FuseDarwinAttr*, long, FuseFillDirFlags, int>)fuse_fill_dir_t;
 
             if (logger.DebugEnabled)
             {
@@ -445,6 +448,7 @@ internal sealed class FuseOperationProxy(IFuseOperations operations, ILogger log
             }
 
             var stat = stackalloc byte[FuseFileStat.NativeStructSize];
+            var darwinAttr = stackalloc FuseDarwinAttr[1];
 
             var name = ArrayPool<byte>.Shared.Rent(512);
 
@@ -459,6 +463,16 @@ internal sealed class FuseOperationProxy(IFuseOperations operations, ILogger log
 
                     file.Stat.MarshalToNative((nint)stat);
 
+                    if (isMacOS)
+                    {
+                        darwinAttr[0] = new FuseDarwinAttr
+                        {
+                            attr = file.Stat,
+                            attr_timeout = 0,
+                            entry_timeout = 0,
+                        };
+                    }
+
                     var length = Encoding.UTF8.GetByteCount(file.Name) + 1;  // Extra byte for null terminator
 
                     if (name.Length < length)
@@ -472,11 +486,13 @@ internal sealed class FuseOperationProxy(IFuseOperations operations, ILogger log
                     
                     name[length] = 0; // Add null terminator
 
-                    var fill_result = fuse_fill_dir(buf, name[0], stat, file.Offset, file.Flags);
+                    var fill_result = isMacOS
+                        ? fuse_fill_dir_darwin(buf, name[0], darwinAttr, file.Offset, file.Flags)
+                        : fuse_fill_dir(buf, name[0], stat, file.Offset, file.Flags);
 
                     if (logger.DebugEnabled)
                     {
-                        logger.Debug($"fuse_fill_dir(name='{file.Name}', emittedOffset={file.Offset}, flags={file.Flags}) -> {fill_result}");
+                        logger.Debug($"fuse_fill_dir(name='{file.Name}', emittedOffset={file.Offset}, flags={file.Flags}, darwin={isMacOS}) -> {fill_result}");
                     }
 
                     if (fill_result != 0)
